@@ -35,12 +35,15 @@
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
+      overflow-x: hidden; /* edge-to-edge(100vw) 사용 시 가로 스크롤 방지 */
     }
 
     button, a { -webkit-tap-highlight-color: transparent; }
 
     /* =========================
       Header (sticky)
+      - (6) 하단 그림자
+      - (7) 스크롤 시 축소(클래스 토글)
     ========================= */
     .app-header{
       position: sticky;
@@ -49,14 +52,16 @@
       background:var(--brand);
       color:#fff;
       padding-top: env(safe-area-inset-top);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12); /* (6) */
     }
     .header-inner{
-      height:48px; /* 요구사항: 48px */
+      height:48px; /* 기본 높이 (7) */
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:12px;
       padding:0 var(--padX);
+      transition: height 200ms ease; /* (7) */
     }
     .header-title{
       font-weight:900;
@@ -65,13 +70,20 @@
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
+      transition: font-size 200ms ease; /* (7) */
     }
     .header-date{
       font-weight:800;
       font-size:13px;
       opacity:0.95;
       white-space:nowrap;
+      transition: font-size 200ms ease; /* (7) */
     }
+
+    /* (7) 스크롤 50px 이상 시 축소 */
+    .app-header.is-compact .header-inner{ height:36px; }
+    .app-header.is-compact .header-title{ font-size:14px; }
+    .app-header.is-compact .header-date{ font-size:12px; }
 
     /* =========================
       Layout
@@ -111,8 +123,7 @@
     }
 
     /* =========================
-      Hero (오늘의 카드뉴스)
-      - 좌우 패딩 없이 full width (앱 컨테이너 내에서 full-bleed)
+      (1) 오늘의 카드뉴스: edge-to-edge + 오버레이 제목/그라데이션
     ========================= */
     .hero-head{
       display:flex;
@@ -122,62 +133,75 @@
       margin-bottom:10px;
     }
 
+    /* edge-to-edge(화면 꽉 차게) */
     .hero-bleed{
       position:relative;
-      margin-left: calc(var(--padX) * -1);
-      margin-right: calc(var(--padX) * -1);
+      width:100vw;
+      margin-left: calc(50% - 50vw);
+      margin-right: calc(50% - 50vw);
     }
 
-    /* share button (우하단) */
+    /* 공유 버튼: 오버레이 우하단(유지) */
     .share-btn{
       position:absolute;
       right:12px;
       bottom:12px;
-      border:1px solid rgba(0,0,0,0.08);
-      background: rgba(255,255,255,0.92);
-      color:#111;
+      border:1px solid rgba(255,255,255,0.25);
+      background: rgba(0,0,0,0.25);
+      color:#fff;
       font-weight:900;
       font-size:12px;
       padding:10px 12px;
       border-radius:999px;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.10);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
       cursor:pointer;
       backdrop-filter: blur(6px);
+      z-index: 6;
     }
     .share-btn:active{ transform: translateY(1px); }
 
+    /* 오버레이 제목(기존 이미지 아래 제목 제거 → 오버레이로 이동) */
     .today-title{
-      margin-top:10px;
+      position:absolute;
+      left:16px;
+      right:84px;   /* 공유 버튼 공간 확보 */
+      bottom:38px;  /* dots 위에 오도록 */
+      color:#fff;
       font-weight:900;
-      font-size:14px;
-      line-height:1.25;
+      font-size:16px;
+      line-height:1.22;
       letter-spacing:-0.2px;
-      white-space:nowrap;          /* 요구사항: 제목 1줄 */
+      white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
+      z-index: 6;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.35);
+      pointer-events:none;
     }
 
     /* =========================
       Carousel
       - 1:1 정사각형
     ========================= */
-    .carousel{ width:100%; user-select:none; }
+    .carousel{
+      width:100%;
+      user-select:none;
+      position: relative; /* dots absolute 기준 */
+    }
     .carousel-viewport{
       overflow:hidden;
       border-radius: var(--radius);
       background: var(--placeholder);
-      touch-action: pan-y; /* 세로 스크롤 허용 + JS로 가로 스와이프 */
+      touch-action: pan-y;
+      position: relative; /* gradient pseudo-element */
     }
     .carousel-track{
       display:flex;
       will-change: transform;
     }
-    .slide{
-      flex: 0 0 100%;
-      padding:0;
-    }
+    .slide{ flex: 0 0 100%; padding:0; }
 
-    /* 이미지 박스 (1:1) */
+    /* 이미지 박스(1:1) */
     .img-box{
       position:relative;
       width:100%;
@@ -198,7 +222,7 @@
     }
     .img-box.is-loaded img{ opacity:1; }
 
-    /* ✅ 요구사항: 에러 텍스트는 기본 display:none, is-error일 때만 보임 */
+    /* ✅ 에러 텍스트: 기본 display:none, is-error일 때만 */
     .img-error-text{
       position:absolute;
       inset:0;
@@ -214,23 +238,56 @@
     }
     .img-box.is-error .img-error-text{ display:flex; }
 
-    /* dots */
+    /* (1) 오늘 히어로: radius 제거 + edge-to-edge */
+    #todayBleed .carousel-viewport{ border-radius: 0; }
+    #todayBleed .img-box{ border-radius: 0; }
+
+    /* (1) 그라데이션 오버레이(이미지 하단 30%) */
+    #todayBleed .carousel-viewport::after{
+      content:"";
+      position:absolute;
+      left:0; right:0; bottom:0;
+      height:30%;
+      background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.45) 100%);
+      pointer-events:none;
+      z-index: 3;
+    }
+
+    /* =========================
+      (2) dot 인디케이터 pill 형태 + 오버레이 내부 배치
+    ========================= */
     .dots{
       display:flex;
       justify-content:center;
       gap:6px;
-      margin-top:8px;
+      margin-top:0;
+      position:absolute;
+      left:50%;
+      transform: translateX(-50%);
+      bottom:14px;
+      z-index: 6; /* 그라데이션 위 */
+      pointer-events:none;
     }
     .dot{
       width:6px;
       height:6px;
       border-radius:999px;
-      background:#ddd;
+      background: rgba(255,255,255,0.5);
+      transition: width 160ms ease, background 160ms ease;
     }
-    .dot.active{ background: var(--brand); }
+    .dot.active{
+      width:16px;
+      height:6px;
+      border-radius:999px;
+      background:#fff;
+    }
+
+    /* 모달에서는 dots 숨김(카운터 사용) */
+    .modal .dots{ display:none !important; }
 
     /* =========================
       Archive (지난 뉴스) - Accordion
+      (3) 버튼 개선
     ========================= */
     .archive{
       margin-top:18px;
@@ -245,14 +302,56 @@
       justify-content:space-between;
       gap:10px;
       padding:12px 12px;
-      border:1px solid var(--line);
-      border-radius:12px;
-      background:#fff;
+      border:0;
+      border-radius:14px;
+      background: rgba(27,71,151,0.08); /* (3) */
       cursor:pointer;
       font-weight:900;
       font-size:14px;
       letter-spacing:-0.2px;
       color:var(--text);
+    }
+
+    .archive-left{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width:0;
+    }
+    .archive-icon{
+      font-size:16px;
+      line-height:1;
+    }
+    .archive-label{
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .archive-right{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-shrink:0;
+    }
+
+    .archive-badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:4px 8px;
+      border-radius:999px;
+      background:#1b4797;
+      color:#fff;
+      font-size:11px;
+      font-weight:900;
+      line-height:1;
+      min-width: 40px;
+    }
+
+    .archive-chev{
+      font-weight:900;
+      opacity:0.9;
     }
 
     .archive-range{
@@ -263,9 +362,7 @@
       white-space:nowrap;
     }
 
-    .archive-panel{
-      margin-top:10px;
-    }
+    .archive-panel{ margin-top:10px; }
 
     .archive-list{
       display:flex;
@@ -273,26 +370,33 @@
       gap:10px;
     }
 
+    /* =========================
+      (4) 아카이브 아이템 개선
+      - 썸네일 64x64
+      - shadow 추가, border 제거
+    ========================= */
     .news-item{
       width:100%;
       display:flex;
       align-items:center;
       gap:12px;
-      padding:10px 10px;
-      border:1px solid var(--line);
-      border-radius:12px;
+      padding:12px 12px;
+      border:0;
+      border-radius:14px;
       background:#fff;
       cursor:pointer;
       text-align:left;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
+    .news-item:active{ transform: translateY(1px); }
 
     .thumb{
-      width:56px;           /* 요구사항: 56x56 */
-      flex: 0 0 56px;
+      width:64px;  /* (4) */
+      flex: 0 0 64px;
     }
     .thumb .img-box{
       padding-top:100%;
-      border-radius:12px;   /* 썸네일 라운드 */
+      border-radius:12px;
     }
 
     .news-meta{
@@ -321,7 +425,7 @@
     }
 
     /* =========================
-      Modal
+      (5) 모달: 풀스크린 + 상단 바 blur + 좌우 화살표
     ========================= */
     .modal{
       position:fixed;
@@ -337,24 +441,29 @@
     }
     .modal-panel{
       position:absolute;
-      left:16px;
-      right:16px;
-      top: calc(16px + env(safe-area-inset-top));
-      bottom: calc(16px + env(safe-area-inset-bottom));
+      left:0;
+      right:0;
+      top:0;
+      bottom:0;
       background:#fff;
-      border-radius:12px;
+      border-radius:0;
       overflow:hidden;
       display:flex;
       flex-direction:column;
-      box-shadow: var(--shadow);
+      box-shadow:none;
     }
     .modal-top{
       display:flex;
       align-items:flex-start;
       justify-content:space-between;
       gap:12px;
-      padding:14px 14px 10px;
-      border-bottom:1px solid var(--line);
+      padding: calc(12px + env(safe-area-inset-top)) 14px 10px;
+      border-bottom:1px solid rgba(0,0,0,0.06);
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top:0;
+      z-index: 20;
     }
     .modal-meta{ min-width:0; flex:1; }
     .modal-date{
@@ -381,13 +490,42 @@
       cursor:pointer;
     }
     .modal-body{
-      padding:12px 14px 14px;
+      padding:12px 14px calc(14px + env(safe-area-inset-bottom));
       display:flex;
       flex-direction:column;
-      gap:10px;
+      gap:12px;
       overflow:auto;
       -webkit-overflow-scrolling: touch;
+      position: relative;
     }
+
+    .modal-carousel-wrap{
+      position: relative;
+    }
+
+    .nav-arrow{
+      position:absolute;
+      top:50%;
+      transform: translateY(-50%);
+      width:40px;
+      height:40px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.25);
+      background: rgba(0,0,0,0.25);
+      color:#fff;
+      font-size:20px;
+      font-weight:900;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      backdrop-filter: blur(6px);
+      z-index: 10;
+    }
+    .nav-arrow.prev{ left:10px; }
+    .nav-arrow.next{ right:10px; }
+    .nav-arrow:active{ transform: translateY(-50%) scale(0.98); }
+
     .modal-counter{
       text-align:center;
       font-size:13px;
@@ -431,14 +569,12 @@
     .toast.is-show{ opacity:1; }
 
     /* 하단 여백(카톡 하단바 고려) */
-    .bottom-pad{
-      height: 10px;
-    }
+    .bottom-pad{ height: 10px; }
   </style>
 </head>
 
 <body>
-  <header class="app-header">
+  <header class="app-header" id="appHeader">
     <div class="header-inner">
       <div class="header-title">염광사 일간 뉴스</div>
       <div class="header-date" id="headerDate"></div>
@@ -452,20 +588,30 @@
         <h2 class="section-title" style="margin:0;">오늘의 카드뉴스</h2>
       </div>
 
+      <!-- (1) edge-to-edge + 오버레이(제목/도트/공유) -->
       <div class="hero-bleed" id="todayBleed">
         <div id="todayCarouselMount"></div>
+        <!-- (1) 오버레이 제목 (JS는 #todayTitle에 텍스트만 넣으면 됨) -->
+        <div id="todayTitle" class="today-title"></div>
+        <!-- 공유 버튼은 오버레이 우하단 유지 -->
         <button class="share-btn" id="shareBtn" type="button" hidden>공유하기</button>
       </div>
 
-      <div id="todayTitle" class="today-title"></div>
       <div class="empty-msg" id="todayEmpty" hidden>오늘의 뉴스가 준비 중입니다</div>
     </section>
 
     <!-- 지난 뉴스(아코디언) -->
     <section class="archive" aria-label="지난 뉴스">
+      <!-- (3) 📅 아이콘 + 건수 배지 + 쉐브론 -->
       <button class="archive-toggle" id="archiveToggle" type="button" aria-expanded="false">
-        <span>지난 뉴스</span>
-        <span id="archiveChev">▼</span>
+        <span class="archive-left">
+          <span class="archive-icon" aria-hidden="true">📅</span>
+          <span class="archive-label">지난 뉴스</span>
+        </span>
+        <span class="archive-right">
+          <span class="archive-badge" id="archiveCountBadge">0건</span>
+          <span id="archiveChev" class="archive-chev">▼</span>
+        </span>
       </button>
 
       <div class="archive-panel" id="archivePanel" hidden>
@@ -493,7 +639,13 @@
       </div>
 
       <div class="modal-body">
-        <div id="modalCarouselMount"></div>
+        <!-- (5) 화살표 포함 래퍼 -->
+        <div class="modal-carousel-wrap">
+          <div id="modalCarouselMount"></div>
+          <button class="nav-arrow prev" id="modalPrev" type="button" aria-label="이전" hidden>‹</button>
+          <button class="nav-arrow next" id="modalNext" type="button" aria-label="다음" hidden>›</button>
+        </div>
+
         <div class="modal-counter" id="modalCounter">0 / 0</div>
       </div>
     </div>
@@ -554,7 +706,17 @@
       modalCarouselMount: $("#modalCarouselMount"),
       modalCounter: $("#modalCounter"),
 
-      toast: $("#toast")
+      toast: $("#toast"),
+
+      /* (3) 건수 배지 */
+      archiveCountBadge: $("#archiveCountBadge"),
+
+      /* (5) 모달 화살표 */
+      modalPrev: $("#modalPrev"),
+      modalNext: $("#modalNext"),
+
+      /* (7) 헤더 축소용 */
+      appHeader: $("#appHeader")
     };
 
     var state = {
@@ -562,7 +724,12 @@
       todayItem: null,
       archiveItems: [],
       modalOpen: false,
-      scrollY: 0
+      scrollY: 0,
+
+      /* (5) 모달 화살표 제어용(표시용 상태) */
+      modalCarouselApi: null,
+      modalIndex: 0,
+      modalTotal: 0
     };
 
     /* =========================
@@ -601,6 +768,24 @@
       var m = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})$/);
       if (!m) return dateStr;
       return m[1] + "." + m[2] + "." + m[3];
+    }
+
+    /* (4) 요일 추가 표시용(표시만) */
+    function getWeekdayKorean(dateStr){
+      var m = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!m) return "";
+      var y = Number(m[1]);
+      var mo = Number(m[2]);
+      var d = Number(m[3]);
+      var dt = new Date(Date.UTC(y, mo - 1, d));
+      var wd = dt.getUTCDay(); // 0(일)~6(토)
+      var map = ["일","월","화","수","목","금","토"];
+      return map[wd] || "";
+    }
+    function formatDateKoreanWithWeekday(dateStr){
+      var base = formatDateKorean(dateStr);
+      var wd = getWeekdayKorean(dateStr);
+      return wd ? (base + " " + wd) : base;
     }
 
     /* =========================
@@ -1206,6 +1391,22 @@
     }
 
     /* =========================
+      (5) 모달 화살표 표시/숨김
+    ========================= */
+    function updateModalArrows(i, total){
+      if (!els.modalPrev || !els.modalNext) return;
+
+      if (!total || total <= 1) {
+        els.modalPrev.hidden = true;
+        els.modalNext.hidden = true;
+        return;
+      }
+
+      els.modalPrev.hidden = (i <= 0);
+      els.modalNext.hidden = (i >= total - 1);
+    }
+
+    /* =========================
       Modal
     ========================= */
     function lockBodyScroll(){
@@ -1232,8 +1433,15 @@
       els.modalCounter.textContent = "1 / " + total;
 
       var carousel = createCarousel(item.images || [], "modal", function(i, total){
+        state.modalIndex = i;
+        state.modalTotal = total;
         els.modalCounter.textContent = (i + 1) + " / " + total;
+        updateModalArrows(i, total);
       });
+
+      state.modalCarouselApi = carousel;
+      state.modalIndex = 0;
+      state.modalTotal = total;
 
       els.modalCarouselMount.appendChild(carousel.el);
 
@@ -1242,6 +1450,7 @@
       lockBodyScroll();
 
       carousel.init();
+      updateModalArrows(0, total);
 
       // 안드로이드 뒤로가기로 모달만 닫히게
       try { history.pushState({ modal:true }, ""); } catch (e) {}
@@ -1256,6 +1465,11 @@
       els.modalCarouselMount.innerHTML = "";
       unlockBodyScroll();
 
+      state.modalCarouselApi = null;
+      state.modalIndex = 0;
+      state.modalTotal = 0;
+      updateModalArrows(0, 0);
+
       if (!fromPopState) {
         try { history.back(); } catch (e) {}
       }
@@ -1269,6 +1483,22 @@
     window.addEventListener("popstate", function(){
       if (state.modalOpen) closeModal(true);
     });
+
+    /* (5) 모달 화살표 클릭 → 이전/다음 */
+    if (els.modalPrev) {
+      els.modalPrev.addEventListener("click", function(e){
+        e.preventDefault();
+        if (!state.modalCarouselApi) return;
+        state.modalCarouselApi.goTo(state.modalIndex - 1, true);
+      });
+    }
+    if (els.modalNext) {
+      els.modalNext.addEventListener("click", function(e){
+        e.preventDefault();
+        if (!state.modalCarouselApi) return;
+        state.modalCarouselApi.goTo(state.modalIndex + 1, true);
+      });
+    }
 
     /* =========================
       Render
@@ -1329,7 +1559,7 @@
           var meta = document.createElement("div");
           meta.className = "news-meta";
           meta.innerHTML =
-            '<div class="news-date">' + escapeHtml(formatDateKorean(item.date)) + '</div>' +
+            '<div class="news-date">' + escapeHtml(formatDateKoreanWithWeekday(item.date)) + '</div>' +
             '<div class="news-title">' + escapeHtml(item.title || "") + '</div>';
 
           btn.appendChild(thumb);
@@ -1412,6 +1642,11 @@
 
         state.archiveItems = archiveItems;
 
+        /* (3) 건수 배지 업데이트 */
+        if (els.archiveCountBadge) {
+          els.archiveCountBadge.textContent = archiveItems.length + "건";
+        }
+
         renderToday(todayItem);
         renderArchive(archiveItems, start, endArchive);
 
@@ -1419,7 +1654,36 @@
         renderToday(null);
         els.archiveEmpty.hidden = false;
         setError(e && e.message ? e.message : "데이터를 불러오지 못했습니다.");
+
+        /* (3) 실패 시 배지도 0건 */
+        if (els.archiveCountBadge) {
+          els.archiveCountBadge.textContent = "0건";
+        }
       });
+    })();
+
+    /* =========================
+      (7) 스크롤 시 헤더 축소 (rAF throttle)
+    ========================= */
+    (function initHeaderShrink(){
+      if (!els.appHeader) return;
+
+      var ticking = false;
+
+      function apply(){
+        ticking = false;
+        var y = window.scrollY || 0;
+        els.appHeader.classList.toggle("is-compact", y >= 50);
+      }
+
+      function onScroll(){
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(apply);
+      }
+
+      window.addEventListener("scroll", onScroll, supportsPassive ? { passive:true } : false);
+      apply();
     })();
   </script>
 </body>
