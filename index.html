@@ -44,6 +44,7 @@
       Header (sticky)
       - (6) 하단 그림자
       - (7) 스크롤 시 축소(클래스 토글)
+      - (로고 추가)
     ========================= */
     .app-header{
       position: sticky;
@@ -63,6 +64,24 @@
       padding:0 var(--padX);
       transition: height 200ms ease; /* (7) */
     }
+
+    /* ✅ 로고 + 타이틀 래퍼 */
+    .header-left{
+      display:flex;
+      align-items:center;
+      gap:8px;           /* 요구: 로고-텍스트 gap 8px */
+      min-width:0;
+      flex:1;
+    }
+    .header-logo{
+      height:48px;       /* 요구: 기본 48px */
+      width:auto;
+      object-fit: contain; /* 요구 */
+      display:block;
+      flex-shrink:0;
+      transition: height 200ms ease; /* 요구: 축소 애니메이션 */
+    }
+
     .header-title{
       font-weight:900;
       font-size:16px;
@@ -70,6 +89,7 @@
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
+      min-width:0;
       transition: font-size 200ms ease; /* (7) */
     }
     .header-date{
@@ -77,13 +97,15 @@
       font-size:13px;
       opacity:0.95;
       white-space:nowrap;
+      flex-shrink:0;
       transition: font-size 200ms ease; /* (7) */
     }
 
     /* (7) 스크롤 50px 이상 시 축소 */
-    .app-header.is-compact .header-inner{ height:36px; }
+    .app-header.is-compact .header-inner{ height:36px; }   /* 요구: 36px */
     .app-header.is-compact .header-title{ font-size:14px; }
     .app-header.is-compact .header-date{ font-size:12px; }
+    .app-header.is-compact .header-logo{ height:36px; }   /* 요구: 축소 시 36px */
 
     /* =========================
       Layout
@@ -576,7 +598,14 @@
 <body>
   <header class="app-header" id="appHeader">
     <div class="header-inner">
-      <div class="header-title">염광사 일간 뉴스</div>
+      <div class="header-left">
+        <img
+          class="header-logo"
+          src="https://cdn.imweb.me/upload/S2026011101dec1a0a9ee1/c71abe68efa9a.png"
+          alt="염광사 로고"
+        />
+        <div class="header-title">염광사 일간 뉴스</div>
+      </div>
       <div class="header-date" id="headerDate"></div>
     </div>
   </header>
