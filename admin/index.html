@@ -1,0 +1,959 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>카드뉴스 관리자 업로드</title>
+  <style>
+    :root{
+      --brand:#1152b3;
+      --bg:#0f172a;
+      --shell:#111827;
+      --panel:#f7f9fc;
+      --card:#ffffff;
+      --text:#111827;
+      --sub:#4b5563;
+      --line:#dbe3ef;
+      --accent:#0ea5e9;
+      --ok-bg:#e7f9ef;
+      --ok-tx:#166534;
+      --err-bg:#ffeef0;
+      --err-tx:#b42318;
+      --info-bg:#eaf2ff;
+      --info-tx:#1d4ed8;
+      --radius:14px;
+      --shadow:0 10px 26px rgba(15,23,42,0.15);
+    }
+    *{box-sizing:border-box;}
+    body{
+      margin:0;
+      color:#e5e7eb;
+      background: radial-gradient(circle at 0% 0%, rgba(14,165,233,0.2) 0%, rgba(14,165,233,0) 45%), var(--bg);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+      line-height:1.45;
+      min-height:100vh;
+    }
+    a{color:#93c5fd;}
+    .app{
+      max-width:1240px;
+      margin:0 auto;
+      padding:14px;
+    }
+    .app-window{
+      border:1px solid rgba(148,163,184,0.24);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow: 0 24px 50px rgba(2,6,23,0.35);
+      background: var(--shell);
+      min-height: calc(100vh - 28px);
+      display:flex;
+      flex-direction:column;
+    }
+    .window-top{
+      height:44px;
+      background:linear-gradient(180deg, #1f2937 0%, #111827 100%);
+      border-bottom:1px solid rgba(148,163,184,0.2);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 14px;
+      gap:10px;
+    }
+    .traffic{
+      display:flex;
+      gap:7px;
+      align-items:center;
+      flex-shrink:0;
+    }
+    .dot{
+      width:11px;
+      height:11px;
+      border-radius:50%;
+      border:1px solid rgba(0,0,0,0.25);
+    }
+    .dot.red{background:#ef4444;}
+    .dot.yellow{background:#f59e0b;}
+    .dot.green{background:#22c55e;}
+    .window-title{
+      color:#cbd5e1;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:0.1px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .window-meta{
+      color:#94a3b8;
+      font-size:11px;
+      font-weight:700;
+      white-space:nowrap;
+      flex-shrink:0;
+    }
+    .workspace{
+      display:grid;
+      grid-template-columns: 260px minmax(0,1fr);
+      min-height:0;
+      flex:1;
+    }
+    .sidebar{
+      border-right:1px solid rgba(148,163,184,0.16);
+      background:linear-gradient(180deg, #0f172a 0%, #111827 70%);
+      padding:16px 14px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    .brand{
+      font-size:16px;
+      font-weight:900;
+      color:#e2e8f0;
+      letter-spacing:-0.2px;
+      margin:0;
+    }
+    .brand-sub{
+      margin:4px 0 0;
+      color:#94a3b8;
+      font-size:11px;
+      font-weight:700;
+      line-height:1.5;
+    }
+    .menu{
+      margin-top:4px;
+      display:grid;
+      gap:8px;
+    }
+    .menu-item{
+      border:1px solid rgba(148,163,184,0.2);
+      border-radius:10px;
+      background:rgba(15,23,42,0.62);
+      color:#cbd5e1;
+      font-size:12px;
+      font-weight:800;
+      padding:9px 10px;
+      line-height:1.35;
+    }
+    .menu-item span{
+      display:block;
+      color:#93c5fd;
+      font-size:11px;
+      font-weight:700;
+      margin-top:2px;
+    }
+    .side-links{
+      margin-top:auto;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .top-link{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border:1px solid rgba(14,165,233,0.3);
+      border-radius:999px;
+      background:rgba(14,165,233,0.12);
+      color:#bae6fd;
+      text-decoration:none;
+      padding:8px 10px;
+      font-size:11px;
+      font-weight:900;
+      line-height:1;
+    }
+    .main{
+      background:var(--panel);
+      color:var(--text);
+      padding:16px;
+      overflow:auto;
+    }
+    .main-head h1{
+      margin:0;
+      font-size:22px;
+      letter-spacing:-0.3px;
+      color:#0f172a;
+    }
+    .main-head p{
+      margin:7px 0 0;
+      color:var(--sub);
+      font-size:13px;
+      font-weight:700;
+    }
+    .wrap{
+      margin-top:12px;
+      padding-bottom:12px;
+      display:grid;
+      gap:12px;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid #e2e8f0;
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px;
+    }
+    .card h2{
+      margin:0 0 8px;
+      font-size:15px;
+      font-weight:900;
+      letter-spacing:-0.2px;
+    }
+    .help{
+      margin:0 0 8px;
+      color:var(--sub);
+      font-size:12px;
+      font-weight:700;
+      line-height:1.55;
+      white-space:pre-line;
+    }
+    .file-input{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:#fff;
+      padding:10px;
+      font-size:13px;
+      font-weight:700;
+      color:var(--text);
+    }
+    .title-map{
+      width:100%;
+      min-height:92px;
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:10px;
+      resize:vertical;
+      font-size:12px;
+      line-height:1.45;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      color:var(--text);
+      background:#fff;
+    }
+    .actions{
+      margin-top:8px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+    .btn{
+      border:0;
+      border-radius:999px;
+      background:linear-gradient(180deg,#1d63c6,#1152b3);
+      color:#fff;
+      font-size:12px;
+      font-weight:900;
+      padding:9px 12px;
+      line-height:1;
+      cursor:pointer;
+    }
+    .btn.secondary{
+      background:#eff3fb;
+      color:#1e3a8a;
+    }
+    .btn[disabled]{
+      opacity:0.4;
+      cursor:not-allowed;
+    }
+    .status{
+      margin-top:8px;
+      border-radius:10px;
+      padding:10px 11px;
+      font-size:12px;
+      font-weight:900;
+      line-height:1.45;
+      white-space:pre-line;
+      background:var(--info-bg);
+      color:var(--info-tx);
+    }
+    .status.ok{background:var(--ok-bg);color:var(--ok-tx);}
+    .status.error{background:var(--err-bg);color:var(--err-tx);}
+    .summary{
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:#fff;
+      padding:10px 11px;
+      font-size:12px;
+      font-weight:900;
+      line-height:1.5;
+      white-space:pre-line;
+    }
+    .warnings{
+      margin:8px 0 0;
+      border-radius:10px;
+      border:1px solid #f5d0d0;
+      background:#fff7f7;
+      color:#991b1b;
+      font-size:12px;
+      font-weight:800;
+      padding:10px;
+      line-height:1.45;
+      white-space:pre-line;
+      max-height:220px;
+      overflow:auto;
+    }
+    .table-wrap{
+      margin-top:8px;
+      border:1px solid var(--line);
+      border-radius:10px;
+      overflow:auto;
+      background:#fff;
+    }
+    .result-table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:720px;
+    }
+    .result-table th,
+    .result-table td{
+      border-bottom:1px solid var(--line);
+      padding:9px 10px;
+      vertical-align:top;
+      font-size:12px;
+    }
+    .result-table th{
+      background:#f1f5f9;
+      color:#1f2937;
+      text-align:left;
+      font-weight:900;
+      white-space:nowrap;
+    }
+    .result-table tr:last-child td{border-bottom:0;}
+    .mono{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      white-space:nowrap;
+    }
+    .title-input{
+      width:100%;
+      min-width:180px;
+      border:1px solid #d7ddea;
+      border-radius:8px;
+      padding:7px 8px;
+      font-size:12px;
+      line-height:1.35;
+    }
+    .path-list{
+      margin:0;
+      font-size:11px;
+      line-height:1.35;
+      white-space:pre;
+      color:#1f2937;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    }
+    .muted{
+      color:#64748b;
+      font-size:11px;
+      font-weight:700;
+      margin-top:4px;
+    }
+    .preview{
+      margin:8px 0 0;
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:#f8fafc;
+      padding:10px;
+      font-size:11px;
+      line-height:1.45;
+      white-space:pre;
+      max-height:280px;
+      overflow:auto;
+      color:#0f172a;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    }
+    .foot{
+      margin-top:8px;
+      color:var(--sub);
+      font-size:11px;
+      font-weight:700;
+      line-height:1.5;
+    }
+    @media (max-width:1040px){
+      .workspace{
+        grid-template-columns: 1fr;
+      }
+      .sidebar{
+        border-right:0;
+        border-bottom:1px solid rgba(148,163,184,0.16);
+      }
+      .side-links{
+        margin-top:10px;
+      }
+    }
+    @media (max-width:700px){
+      .app{padding:0;}
+      .app-window{
+        border-radius:0;
+        min-height:100vh;
+      }
+      .main-head h1{font-size:20px;}
+      .card{padding:12px;}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="app-window">
+      <div class="window-top">
+        <div class="traffic" aria-hidden="true">
+          <span class="dot red"></span>
+          <span class="dot yellow"></span>
+          <span class="dot green"></span>
+        </div>
+        <div class="window-title">Daily News Admin Console</div>
+        <div class="window-meta">ZIP → 분류 → TSV</div>
+      </div>
+
+      <div class="workspace">
+        <aside class="sidebar">
+          <div>
+            <h2 class="brand">카드뉴스 운영 콘솔</h2>
+            <p class="brand-sub">파일명을 읽어 날짜별 카드뉴스 세트를 자동 생성하고 시트 입력 포맷을 만듭니다.</p>
+          </div>
+
+          <div class="menu">
+            <div class="menu-item">Step 1. ZIP 업로드<span>이미지 파일 일괄 인식</span></div>
+            <div class="menu-item">Step 2. 제목 매핑<span>날짜별 제목 빠른 주입</span></div>
+            <div class="menu-item">Step 3. 결과 검수<span>date / img1~img6 확인</span></div>
+            <div class="menu-item">Step 4. 출력<span>TSV 복사 + 정리 ZIP 저장</span></div>
+          </div>
+
+          <div class="side-links">
+            <a class="top-link" href="../customer/index.html" target="_blank" rel="noopener">고객 페이지 열기</a>
+          </div>
+        </aside>
+
+        <main class="main">
+          <div class="main-head">
+            <h1>카드뉴스 관리자 업로드</h1>
+            <p>ZIP 파일을 올리면 파일명에서 날짜/순번을 읽어 카드 세트를 자동 정리하고, 시트 입력용 TSV를 만듭니다.</p>
+          </div>
+
+          <div class="wrap">
+            <section class="card">
+              <h2>1) ZIP 업로드</h2>
+              <p class="help">지원 파일명 예시
+- 2026-03-10_1.png
+- 20260310-2.jpg
+- 2026-03-10/3.webp
+- card_2026.03.10_4.png</p>
+              <input class="file-input" id="zipInput" type="file" accept=".zip,application/zip" />
+              <div class="actions">
+                <button class="btn" id="processBtn" type="button" disabled>ZIP 분석하기</button>
+              </div>
+              <div class="status" id="statusBox">ZIP 파일을 선택해 주세요.</div>
+            </section>
+
+            <section class="card">
+              <h2>2) 제목 매핑 (선택)</h2>
+              <p class="help">형식: 한 줄에 `날짜,제목` 또는 `날짜[TAB]제목`
+예시:
+2026-03-10,사장님이 바로 쓰는 재방문 문구 5선
+2026-03-11,배달앱 별점 방어 응답 템플릿</p>
+              <textarea class="title-map" id="titleMap" placeholder="2026-03-10,제목"></textarea>
+              <div class="actions">
+                <button class="btn secondary" id="applyTitleBtn" type="button" disabled>제목만 반영</button>
+              </div>
+            </section>
+
+            <section class="card">
+              <h2>3) 자동 분류 결과</h2>
+              <div class="summary" id="summaryBox">아직 분석 전입니다.</div>
+              <pre class="warnings" id="warningBox" hidden></pre>
+              <div class="table-wrap">
+                <table class="result-table">
+                  <thead>
+                    <tr>
+                      <th>date</th>
+                      <th>이미지 수</th>
+                      <th>title (수정 가능)</th>
+                      <th>img1~img6 경로</th>
+                    </tr>
+                  </thead>
+                  <tbody id="resultBody">
+                    <tr><td colspan="4">데이터 없음</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="card">
+              <h2>4) 출력</h2>
+              <div class="actions">
+                <button class="btn" id="copyTsvBtn" type="button" disabled>TSV 복사</button>
+                <button class="btn secondary" id="copyJsonBtn" type="button" disabled>JSON 복사</button>
+                <button class="btn secondary" id="downloadZipBtn" type="button" disabled>정리 ZIP 다운로드</button>
+              </div>
+              <p class="help">정리 ZIP에는 아래 파일이 포함됩니다.
+- customer/images/YYYY-MM-DD/1.ext ... n.ext
+- news.tsv (시트 붙여넣기용)
+- news.json (백업용)</p>
+              <pre class="preview" id="tsvPreview">아직 생성 전입니다.</pre>
+              <div class="foot">운영 팁: 정리 ZIP을 푼 뒤 `customer/images/`를 덮어쓰고, `news.tsv` 내용을 시트에 붙여넣으면 됩니다.</div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script>
+    (function(){
+      function $(id){return document.getElementById(id);}
+      var els = {
+        zipInput: $("zipInput"),
+        processBtn: $("processBtn"),
+        applyTitleBtn: $("applyTitleBtn"),
+        titleMap: $("titleMap"),
+        statusBox: $("statusBox"),
+        summaryBox: $("summaryBox"),
+        warningBox: $("warningBox"),
+        resultBody: $("resultBody"),
+        copyTsvBtn: $("copyTsvBtn"),
+        copyJsonBtn: $("copyJsonBtn"),
+        downloadZipBtn: $("downloadZipBtn"),
+        tsvPreview: $("tsvPreview")
+      };
+
+      var state = {
+        zipFile: null,
+        groups: [],
+        warnings: [],
+        rows: [],
+        tsv: "",
+        jsonText: "",
+        busy: false
+      };
+
+      function pad2(n){return String(n).padStart(2,"0");}
+      function isValidDate(y,m,d){
+        var dt = new Date(Date.UTC(y,m-1,d));
+        return dt.getUTCFullYear()===y && (dt.getUTCMonth()+1)===m && dt.getUTCDate()===d;
+      }
+      function toISODate(y,m,d){
+        y=Number(y);m=Number(m);d=Number(d);
+        if(!isValidDate(y,m,d)) return "";
+        return y+"-"+pad2(m)+"-"+pad2(d);
+      }
+      function detectDateInText(text){
+        var s = String(text||"");
+        var patterns = [
+          /((?:19|20)\d{2})[.\-_ ](0?[1-9]|1[0-2])[.\-_ ](0?[1-9]|[12]\d|3[01])/,
+          /((?:19|20)\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])/
+        ];
+        for(var i=0;i<patterns.length;i++){
+          var m = patterns[i].exec(s);
+          if(!m) continue;
+          var iso = toISODate(m[1],m[2],m[3]);
+          if(!iso) continue;
+          return {date:iso,start:m.index,end:m.index+m[0].length};
+        }
+        return null;
+      }
+      function detectOrderNumber(text){
+        var s = String(text||"");
+        var nums = [];
+        var re = /\d{1,2}/g;
+        var m;
+        while((m=re.exec(s))!==null){
+          var n = Number(m[0]);
+          if(n>=1 && n<=99) nums.push(n);
+        }
+        return nums.length?nums[nums.length-1]:null;
+      }
+      function isImageFilePath(path){
+        return /\.(png|jpe?g|webp|gif|avif)$/i.test(String(path||""));
+      }
+      function inferFileMeta(path){
+        var norm = String(path||"").replace(/\\/g,"/");
+        var parts = norm.split("/").filter(Boolean);
+        if(!parts.length) return {date:"",order:null,ext:"",path:norm};
+        var file = parts[parts.length-1];
+        var dot = file.lastIndexOf(".");
+        var base = dot>=0 ? file.slice(0,dot) : file;
+        var ext = dot>=0 ? file.slice(dot+1).toLowerCase() : "png";
+
+        var dateInfo = null;
+        for(var i=parts.length-2;i>=0;i--){
+          dateInfo = detectDateInText(parts[i]);
+          if(dateInfo) break;
+        }
+        var baseDateInfo = detectDateInText(base);
+        if(!dateInfo && baseDateInfo) dateInfo = baseDateInfo;
+
+        var date = dateInfo ? dateInfo.date : "";
+        var orderSource = base;
+        if(baseDateInfo && date===baseDateInfo.date){
+          orderSource = (base.slice(0,baseDateInfo.start)+" "+base.slice(baseDateInfo.end)).trim();
+        }
+        var order = detectOrderNumber(orderSource);
+        return {date:date,order:order,ext:ext,path:norm};
+      }
+      function isISODate(s){
+        var m = String(s||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if(!m) return false;
+        return isValidDate(Number(m[1]),Number(m[2]),Number(m[3]));
+      }
+      function parseTitleMap(text){
+        var map = {};
+        var lines = String(text||"").split(/\r?\n/);
+        for(var i=0;i<lines.length;i++){
+          var line = lines[i].trim();
+          if(!line) continue;
+          var tab = line.indexOf("\t");
+          var comma = line.indexOf(",");
+          var idx = -1;
+          if(tab===-1) idx = comma;
+          else if(comma===-1) idx = tab;
+          else idx = Math.min(tab,comma);
+          if(idx<0) continue;
+          var left = line.slice(0,idx).trim();
+          var right = line.slice(idx+1).trim();
+          if(!right) continue;
+          var dt = detectDateInText(left);
+          if(!dt || !isISODate(dt.date)) continue;
+          map[dt.date] = right;
+        }
+        return map;
+      }
+      function sanitizeTSVCell(v){
+        return String(v==null?"":v).replace(/\t/g," ").replace(/\r?\n/g," ");
+      }
+      function compareByOrderThenPath(a,b){
+        var ao = a.order==null ? 999 : a.order;
+        var bo = b.order==null ? 999 : b.order;
+        if(ao!==bo) return ao-bo;
+        return a.path.localeCompare(b.path);
+      }
+      function setBusy(flag){
+        state.busy = !!flag;
+        var disable = !!flag;
+        els.processBtn.disabled = disable || !state.zipFile;
+        els.applyTitleBtn.disabled = disable || !state.groups.length;
+        els.copyTsvBtn.disabled = disable || !state.groups.length;
+        els.copyJsonBtn.disabled = disable || !state.groups.length;
+        els.downloadZipBtn.disabled = disable || !state.groups.length;
+      }
+      function setStatus(message,type){
+        els.statusBox.textContent = message || "";
+        els.statusBox.className = "status";
+        if(type==="ok") els.statusBox.classList.add("ok");
+        else if(type==="error") els.statusBox.classList.add("error");
+      }
+      function renderWarnings(){
+        if(!state.warnings.length){
+          els.warningBox.hidden = true;
+          els.warningBox.textContent = "";
+          return;
+        }
+        var lines = ["제외/경고 항목 "+state.warnings.length+"건"];
+        for(var i=0;i<state.warnings.length;i++) lines.push("- "+state.warnings[i]);
+        els.warningBox.textContent = lines.join("\n");
+        els.warningBox.hidden = false;
+      }
+      function renderSummary(){
+        var days = state.groups.length;
+        var total = 0;
+        var used = 0;
+        for(var i=0;i<state.groups.length;i++){
+          total += state.groups[i].files.length;
+          used += Math.min(6,state.groups[i].files.length);
+        }
+        if(!days){
+          els.summaryBox.textContent = "아직 분석 전입니다.";
+          return;
+        }
+        els.summaryBox.textContent = "분석 결과: "+days+"일 / 총 "+total+"장\n시트 반영 이미지 수(최대 6장 기준): "+used+"장";
+      }
+      function renderTable(){
+        els.resultBody.innerHTML = "";
+        if(!state.groups.length){
+          var trEmpty = document.createElement("tr");
+          var tdEmpty = document.createElement("td");
+          tdEmpty.colSpan = 4;
+          tdEmpty.textContent = "데이터 없음";
+          trEmpty.appendChild(tdEmpty);
+          els.resultBody.appendChild(trEmpty);
+          return;
+        }
+        for(var i=0;i<state.groups.length;i++){
+          (function(group){
+            var tr = document.createElement("tr");
+
+            var tdDate = document.createElement("td");
+            tdDate.className = "mono";
+            tdDate.textContent = group.date;
+
+            var tdCount = document.createElement("td");
+            tdCount.textContent = String(group.files.length);
+
+            var tdTitle = document.createElement("td");
+            var input = document.createElement("input");
+            input.type = "text";
+            input.className = "title-input";
+            input.value = group.title || "";
+            input.placeholder = "제목 입력";
+            input.addEventListener("input",function(){
+              group.title = input.value;
+              recomputeOutputs();
+            });
+            tdTitle.appendChild(input);
+
+            var tdPaths = document.createElement("td");
+            var preview = group.files.slice(0,6).map(function(f){return f.webPath;}).join("\n");
+            var pre = document.createElement("pre");
+            pre.className = "path-list";
+            pre.textContent = preview || "-";
+            tdPaths.appendChild(pre);
+            if(group.files.length>6){
+              var more = document.createElement("div");
+              more.className = "muted";
+              more.textContent = "+ "+(group.files.length-6)+"장 추가 (시트에는 앞 6장만 입력)";
+              tdPaths.appendChild(more);
+            }
+
+            tr.appendChild(tdDate);
+            tr.appendChild(tdCount);
+            tr.appendChild(tdTitle);
+            tr.appendChild(tdPaths);
+            els.resultBody.appendChild(tr);
+          })(state.groups[i]);
+        }
+      }
+      function recomputeOutputs(){
+        var rows = [];
+        var lines = [["date","title","img1","img2","img3","img4","img5","img6"].join("\t")];
+        for(var i=0;i<state.groups.length;i++){
+          var g = state.groups[i];
+          var imgs = g.files.slice(0,6).map(function(f){return f.webPath;});
+          var row = [g.date,g.title||""];
+          for(var j=0;j<6;j++) row.push(imgs[j]||"");
+          lines.push(row.map(sanitizeTSVCell).join("\t"));
+          rows.push({date:g.date,title:g.title||"",images:imgs});
+        }
+        state.rows = rows;
+        state.tsv = lines.join("\n");
+        state.jsonText = JSON.stringify(rows,null,2);
+
+        var split = state.tsv.split("\n");
+        if(split.length>22){
+          els.tsvPreview.textContent = split.slice(0,22).join("\n") + "\n... ("+(split.length-22)+"줄 생략)";
+        }else{
+          els.tsvPreview.textContent = state.tsv || "아직 생성 전입니다.";
+        }
+
+        renderSummary();
+        renderWarnings();
+        renderTable();
+        setBusy(false);
+      }
+      function applyTitleOnly(){
+        if(!state.groups.length) return;
+        var map = parseTitleMap(els.titleMap.value);
+        var updated = 0;
+        for(var i=0;i<state.groups.length;i++){
+          var g = state.groups[i];
+          if(Object.prototype.hasOwnProperty.call(map,g.date)){
+            g.title = map[g.date];
+            updated++;
+          }
+        }
+        recomputeOutputs();
+        setStatus("제목 반영 완료: "+updated+"일","ok");
+      }
+      function resetOutputState(){
+        state.groups = [];
+        state.warnings = [];
+        state.rows = [];
+        state.tsv = "";
+        state.jsonText = "";
+        els.summaryBox.textContent = "아직 분석 전입니다.";
+        els.warningBox.hidden = true;
+        els.warningBox.textContent = "";
+        els.resultBody.innerHTML = "<tr><td colspan='4'>데이터 없음</td></tr>";
+        els.tsvPreview.textContent = "아직 생성 전입니다.";
+        setBusy(false);
+      }
+      async function processZip(){
+        if(!state.zipFile){
+          setStatus("ZIP 파일을 먼저 선택해 주세요.","error");
+          return;
+        }
+        if(typeof JSZip==="undefined"){
+          setStatus("ZIP 라이브러리를 불러오지 못했습니다. 네트워크 상태를 확인해 주세요.","error");
+          return;
+        }
+
+        setBusy(true);
+        setStatus("ZIP 분석 중입니다...","info");
+        try{
+          var zipBuffer = await state.zipFile.arrayBuffer();
+          var zip = await JSZip.loadAsync(zipBuffer);
+          var entries = [];
+          zip.forEach(function(relativePath,entry){
+            if(entry.dir) return;
+            if(!isImageFilePath(relativePath)) return;
+            entries.push(entry);
+          });
+
+          if(!entries.length){
+            throw new Error("ZIP 안에서 이미지 파일을 찾지 못했습니다.");
+          }
+
+          var groupsByDate = {};
+          var warnings = [];
+
+          await Promise.all(entries.map(async function(entry){
+            var meta = inferFileMeta(entry.name);
+            if(!meta.date){
+              warnings.push("날짜 인식 실패: "+meta.path);
+              return;
+            }
+            var blob = await entry.async("blob");
+            if(!groupsByDate[meta.date]) groupsByDate[meta.date] = [];
+            groupsByDate[meta.date].push({
+              path: meta.path,
+              order: meta.order,
+              ext: meta.ext || "png",
+              blob: blob,
+              webPath: "",
+              packPath: ""
+            });
+          }));
+
+          var dateKeys = Object.keys(groupsByDate).sort();
+          if(!dateKeys.length){
+            throw new Error("유효한 날짜를 가진 이미지가 없습니다. 파일명 규칙을 확인해 주세요.");
+          }
+
+          var titleMap = parseTitleMap(els.titleMap.value);
+          var groups = [];
+          var total = 0;
+
+          for(var i=0;i<dateKeys.length;i++){
+            var date = dateKeys[i];
+            var files = groupsByDate[date].sort(compareByOrderThenPath);
+            for(var j=0;j<files.length;j++){
+              files[j].webPath = "images/"+date+"/"+(j+1)+"."+files[j].ext;
+              files[j].packPath = "customer/"+files[j].webPath;
+            }
+            if(files.length>6){
+              warnings.push(date+" 이미지 "+files.length+"장: 시트에는 앞 6장만 반영됩니다.");
+            }
+            total += files.length;
+            groups.push({
+              date: date,
+              title: titleMap[date] || "",
+              files: files
+            });
+          }
+
+          state.groups = groups;
+          state.warnings = warnings;
+          recomputeOutputs();
+          setStatus("분석 완료: "+groups.length+"일 / "+total+"장","ok");
+        }catch(err){
+          resetOutputState();
+          setStatus("분석 실패: "+(err&&err.message?err.message:"알 수 없는 오류"),"error");
+        }finally{
+          setBusy(false);
+        }
+      }
+      function copyText(text,label){
+        var s = String(text||"");
+        if(!s){
+          setStatus(label+" 내용이 비어 있습니다.","error");
+          return;
+        }
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(s).then(function(){
+            setStatus(label+" 복사 완료","ok");
+          }).catch(function(){
+            fallbackCopy(s,label);
+          });
+          return;
+        }
+        fallbackCopy(s,label);
+      }
+      function fallbackCopy(text,label){
+        try{
+          var ta = document.createElement("textarea");
+          ta.value = text;
+          ta.setAttribute("readonly","");
+          ta.style.cssText = "position:fixed;left:-9999px;top:-9999px";
+          document.body.appendChild(ta);
+          ta.select();
+          var ok = document.execCommand("copy");
+          document.body.removeChild(ta);
+          if(ok) setStatus(label+" 복사 완료","ok");
+          else setStatus(label+" 복사에 실패했습니다.","error");
+        }catch(e){
+          setStatus(label+" 복사에 실패했습니다.","error");
+        }
+      }
+      function todayStamp(){
+        var now = new Date();
+        return now.getFullYear()+pad2(now.getMonth()+1)+pad2(now.getDate());
+      }
+      async function downloadRepackedZip(){
+        if(!state.groups.length){
+          setStatus("다운로드할 데이터가 없습니다.","error");
+          return;
+        }
+        if(typeof JSZip==="undefined"){
+          setStatus("ZIP 라이브러리를 불러오지 못했습니다.","error");
+          return;
+        }
+        setBusy(true);
+        setStatus("정리 ZIP 생성 중입니다...","info");
+        try{
+          var out = new JSZip();
+          for(var i=0;i<state.groups.length;i++){
+            var g = state.groups[i];
+            for(var j=0;j<g.files.length;j++){
+              out.file(g.files[j].packPath,g.files[j].blob);
+            }
+          }
+          out.file("news.tsv",state.tsv);
+          out.file("news.json",state.jsonText);
+          var blob = await out.generateAsync({
+            type:"blob",
+            compression:"DEFLATE",
+            compressionOptions:{level:6}
+          });
+          var href = URL.createObjectURL(blob);
+          var a = document.createElement("a");
+          a.href = href;
+          a.download = "daily-news-pack-"+todayStamp()+".zip";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(function(){URL.revokeObjectURL(href);},2000);
+          setStatus("정리 ZIP 다운로드를 시작했습니다.","ok");
+        }catch(e){
+          setStatus("ZIP 생성 실패: "+(e&&e.message?e.message:"오류"),"error");
+        }finally{
+          setBusy(false);
+        }
+      }
+
+      els.zipInput.addEventListener("change",function(){
+        state.zipFile = (els.zipInput.files && els.zipInput.files[0]) ? els.zipInput.files[0] : null;
+        if(state.zipFile){
+          setStatus("선택된 파일: "+state.zipFile.name+"\n'ZIP 분석하기'를 누르세요.","info");
+        }else{
+          setStatus("ZIP 파일을 선택해 주세요.","info");
+          resetOutputState();
+        }
+        setBusy(false);
+      });
+      els.processBtn.addEventListener("click",processZip);
+      els.applyTitleBtn.addEventListener("click",applyTitleOnly);
+      els.copyTsvBtn.addEventListener("click",function(){copyText(state.tsv,"TSV");});
+      els.copyJsonBtn.addEventListener("click",function(){copyText(state.jsonText,"JSON");});
+      els.downloadZipBtn.addEventListener("click",downloadRepackedZip);
+
+      setBusy(false);
+      setStatus("ZIP 파일을 선택해 주세요.","info");
+    })();
+  </script>
+</body>
+</html>
